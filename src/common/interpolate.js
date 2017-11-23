@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-export default (year = 1800) => {
+export default (year = 1800, data) => {
 	// A bisector since many nation's data is sparsely-defined.
 	const bisect = d3.bisector(d => d[0]);
 
@@ -15,7 +15,7 @@ export default (year = 1800) => {
 		}
 		return a[1];
 	}
-	return nations.map(d => ({
+	return data.map(d => ({
 		name: d.name,
 		region: d.region,
 		income: interpolateValues(d.income, year),

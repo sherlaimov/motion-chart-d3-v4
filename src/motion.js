@@ -105,7 +105,7 @@ export default function motionFactory(data) {
 		.append('g')
 		.attr('class', 'dots')
 		.selectAll('.dot')
-		.data(interpolateData(1800))
+		.data(interpolateData(1800, data))
 		.enter()
 		.append('circle')
 		.attr('class', 'dot')
@@ -241,7 +241,7 @@ export default function motionFactory(data) {
 		};
 	}
 	// Updates the display to show the specified year.
-	function displayYear(year) {
+	function displayYear(year, data) {
 		// window.pVals.currYear = Math.round(year);
 		dot
 			.data(interpolateData(year), key)

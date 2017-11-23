@@ -9,16 +9,20 @@ import '../styles/style.css';
 // const chart = chartFactory();
 
 // Load the data.
-const getData = async url => {
-	try {
-		const response = await fetch('../data/nations.json');
-		const nations = await response.json();
-		return nations;
-	} catch (e) {
-		console.error(e);
-		return undefined;
-	}
-};
+async function fetchData() {
+	const getData = async url => {
+		try {
+			const response = await fetch('../data/nations.json');
+			const nations = await response.json();
+			return nations;
+		} catch (e) {
+			console.error(e);
+			return undefined;
+		}
+	};
+	const data = await getData();
+	return data;
+}
 
 const interpolateData = (nations, year = 1800) => {
 	// A bisector since many nation's data is sparsely-defined.
@@ -47,7 +51,9 @@ const interpolateData = (nations, year = 1800) => {
 // 	console.log(data);
 // });
 
-// const newData = await getData();
-getData()
+// const newData = fetchData();
+// console.log(newData);
+fetchData()
 	// .then(data => interpolateData(data))
 	.then(data => motionChart(data));
+// console.log(newData);
