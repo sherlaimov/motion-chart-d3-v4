@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>📈 Motion Chart with D3.js</title>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+</head>
+
+<body>
+  <h1>The Wealth & Health of Nations</h1>
+
+  <p id="chart"></p>
+  <div class="buttons">
+    <button id="play" data-role="button" data-inline="true" data-icon="refresh">
+      <span id="playText">Play ></span>
+    </button>
+    <button id="stop">Stop</button>
+    <button id="resume">Resume</button>
+  </div>
+  <div id="slider">
+    <div id="custom-handle" class="ui-slider-handle"></div>
+  </div>
+
+  <div id="timeline"></div>
+  <aside>Mouseover the year to move forward and backwards through time.</aside>
+  <script src="assets/bundle.js"></script>
+</body>
+
+</html>
