@@ -4,10 +4,10 @@ import $ui from 'jquery-ui';
 import chartFactory from './common';
 import interpolateData from './common/interpolate';
 
-export default function motionFactory(data) {
+export default function motionChart(data) {
 	const chart = chartFactory();
-	const width = chart.width - chart.margin.right;
-	const height = chart.height - chart.margin.bottom;
+	const width = chart.width - chart.margin.right - 500;
+	const height = chart.height - chart.margin.bottom - 400;
 
 	function x(d) {
 		return d.income;
@@ -25,8 +25,8 @@ export default function motionFactory(data) {
 		return d.name;
 	}
 	// Positions the dots based on data.
-	function position(dot) {
-		dot
+	function position(_data) {
+		_data
 			.attr('cx', d => xScale(x(d)))
 			.attr('cy', d => yScale(y(d)))
 			.attr('r', d => radiusScale(radius(d)));
@@ -101,7 +101,7 @@ export default function motionFactory(data) {
 		.text(1800);
 
 	// Add a dot per nation. Initialize the data at 1800, and set the colors.
-	const dot = chart.svg
+	const dots = chart.svg
 		.append('g')
 		.attr('class', 'dots')
 		.selectAll('.dot')
@@ -114,20 +114,7 @@ export default function motionFactory(data) {
 		.sort(order);
 
 	// Add a title.
-	dot.append('title').text(d => d.name);
-
-	console.log(label);
-	// Add an overlay for the year label.
-	const box = label.node().getBBox();
-
-	const overlay = chart.svg
-		.append('rect')
-		.attr('class', 'overlay')
-		.attr('x', box.x)
-		.attr('y', box.y)
-		.attr('width', box.width)
-		.attr('height', box.height)
-		.on('mouseover', enableInteraction);
+	dots.append('title').text(d => d.name);
 
 	// let playing = false;
 	document.querySelector('#play').addEventListener('click', startPlaying);
@@ -141,7 +128,6 @@ export default function motionFactory(data) {
 		console.log('stopPlaying', window.pVals.currYear);
 		// window.test = svg.transition('yeah').duration(0);
 
-		// console.log(test);
 		chart.svg.interrupt('yeah');
 	}
 	window.pVals = {
@@ -157,7 +143,6 @@ export default function motionFactory(data) {
 	};
 	const duration = 209000;
 	function transition() {
-		// Start a transition that interpolates the data based on year.
 		const t = chart.svg
 			.transition('yeah')
 			.duration(d => {
@@ -169,60 +154,25 @@ export default function motionFactory(data) {
 			})
 			// .delay((d, i) => i * 5)
 			.ease(d3.easeLinear)
-			.tween('year', (d, i, e) => tweenYear(d))
-			.each((d, i, e) => {
-				console.log('Why does this run only ONCE?');
-				// console.log(d, i, e);
-				return d;
-			});
+			.tween('year', (d, i, e) => tweenYear());
 
 		t
 			.on('start', d => {
 				// ?????????????
-				tweenYear(d)();
+				tweenYear()();
 				console.log('Transition started', d);
 			})
 			.on('end', d => {
 				console.log('Transition ended', d);
 				// why do we need this method?
-				enableInteraction(d);
 			})
 			.on('interrupt', (d, i, el) => {
 				// console.log(d, i, el);
 				window.pVals.lastTween = window.pVals.currTween;
 				console.log('Transition interrupted', d);
 			});
-	}
-
-	// After the transition finishes, you can mouseover to change the year.
-	function enableInteraction() {
-		console.log('*** enableInteraction ***');
-		const yearScale = d3
-			.scaleLinear()
-			.domain([1800, 2009])
-			.range([box.x + 10, box.x + box.width - 10])
-			.clamp(true);
-
-		// Cancel the current transition, if any.
-		svg.transition().duration(0);
-
-		overlay
-			.on('mouseover', mouseover)
-			.on('mouseout', mouseout)
-			.on('mousemove', mousemove)
-			.on('touchmove', mousemove);
-
-		function mouseover() {
-			label.classed('active', true);
-		}
-
-		function mouseout() {
-			label.classed('active', false);
-		}
-
-		function mousemove() {
-			displayYear(yearScale.invert(d3.mouse(this)[0]));
-		}
+		// Start a transition that interpolates the data based on year.
+		chart.svg.transition(t);
 	}
 
 	// Tweens the entire chart by first tweening the year, and then the data.
@@ -241,10 +191,10 @@ export default function motionFactory(data) {
 		};
 	}
 	// Updates the display to show the specified year.
-	function displayYear(year, data) {
+	function displayYear(year) {
 		// window.pVals.currYear = Math.round(year);
-		dot
-			.data(interpolateData(year), key)
+		dots
+			.data(interpolateData(year, data), key)
 			.call(position)
 			.sort(order);
 		label.text(Math.round(year));
@@ -262,7 +212,7 @@ export default function motionFactory(data) {
 			handle.text(ui.value);
 			window.pVals.currYear = ui.value;
 			window.pVals.calRatio();
-			displayYear(ui.value);
+			displayYear(ui.value, data);
 		},
 		min: 1800,
 		max: 2009,
