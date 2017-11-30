@@ -4,6 +4,8 @@ import $ui from 'jquery-ui';
 import chartFactory from './common';
 import interpolateData from './common/interpolate';
 
+window.d3 = d3;
+
 export default function motionChart(data) {
 	const chart = chartFactory();
 	const width = chart.width - chart.margin.right - 500;
@@ -159,7 +161,7 @@ export default function motionChart(data) {
 		t
 			.on('start', d => {
 				// ?????????????
-				tweenYear()();
+				// tweenYear()();
 				console.log('Transition started', d);
 			})
 			.on('end', d => {
@@ -180,14 +182,14 @@ export default function motionChart(data) {
 	// d3doc: transition.tween - run custom code during the transition.
 	function tweenYear() {
 		const year = d3.interpolateNumber(window.pVals.currYear || 1800, 2009);
-		return t => {
+		return tween => {
 			// console.log(t);
-			t += window.pVals.lastTween; // was it previously paused?
-			window.pVals.currTween = t;
-			// console.log('tweenYear()', year(t));
-			window.pVals.currYear = Math.round(year(t));
+			tween += window.pVals.lastTween; // was it previously paused?
+			window.pVals.currTween = tween;
+			// console.log('tween', tween);
+			window.pVals.currYear = Math.round(year(tween));
 			// $('#slider').slider('value', window.pVals.currYear);
-			displayYear(year(t));
+			displayYear(year(tween));
 		};
 	}
 	// Updates the display to show the specified year.
@@ -208,7 +210,6 @@ export default function motionChart(data) {
 			handle.text($(this).slider('value'));
 		},
 		slide(event, ui) {
-			console.log('Slide event');
 			handle.text(ui.value);
 			window.pVals.currYear = ui.value;
 			window.pVals.calRatio();
