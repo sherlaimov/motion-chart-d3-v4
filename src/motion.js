@@ -127,7 +127,7 @@ export default function motionChart(data) {
 	}
 
 	function stopPlaying() {
-		console.log('stopPlaying', window.pVals.currYear);
+		// console.log('stopPlaying', window.pVals.currYear);
 		// window.test = svg.transition('yeah').duration(0);
 
 		chart.svg.interrupt('yeah');
@@ -135,7 +135,8 @@ export default function motionChart(data) {
 	window.pVals = {
 		lastTween: 0,
 		currTween: null,
-		currYear: null,
+		currYear: 1800,
+		duration: 209000,
 		calRatio() {
 			const allWidth = 2009 - 1800;
 			const diff = this.currYear - 1800;
@@ -143,20 +144,19 @@ export default function motionChart(data) {
 			return diff / allWidth;
 		},
 	};
-	const duration = 209000;
 	function transition() {
 		const t = chart.svg
 			.transition('yeah')
 			.duration(d => {
-				if (duration - duration * window.pVals.lastTween === 0) {
-					console.log('IT"S ZERO');
-				}
-				console.log(duration - duration * window.pVals.lastTween);
-				return duration - duration * window.pVals.lastTween;
+				console.log('PASSED duration:', window.pVals.duration - window.pVals.duration * window.pVals.lastTween);
+				// return window.pVals.duration - window.pVals.duration * window.pVals.lastTween;
+				return window.pVals.duration - window.pVals.duration * window.pVals.lastTween
 			})
 			// .delay((d, i) => i * 5)
 			.ease(d3.easeLinear)
-			.tween('year', (d, i, e) => tweenYear());
+			.tween('year', tweenYear);
+
+		window.trans = t;
 
 		t
 			.on('start', d => {
@@ -169,7 +169,6 @@ export default function motionChart(data) {
 				// why do we need this method?
 			})
 			.on('interrupt', (d, i, el) => {
-				// console.log(d, i, el);
 				window.pVals.lastTween = window.pVals.currTween;
 				console.log('Transition interrupted', d);
 			});
@@ -181,7 +180,8 @@ export default function motionChart(data) {
 	// For the interpolated data, the dots and label are redrawn.
 	// d3doc: transition.tween - run custom code during the transition.
 	function tweenYear() {
-		const year = d3.interpolateNumber(window.pVals.currYear || 1800, 2009);
+		const year = d3.interpolateNumber(1800, 2009);
+		console.log('tweenYear -> currYear:', window.pVals.currYear);
 		return tween => {
 			// console.log(t);
 			tween += window.pVals.lastTween; // was it previously paused?
@@ -195,6 +195,10 @@ export default function motionChart(data) {
 	// Updates the display to show the specified year.
 	function displayYear(year) {
 		// window.pVals.currYear = Math.round(year);
+		console.log('calculated duration -> ', window.pVals.duration - window.pVals.duration * window.pVals.lastTween);
+		if (window.pVals.duration - window.pVals.duration * window.pVals.lastTween === 0) {
+			console.log('IT IS A ZERO');
+		}
 		dots
 			.data(interpolateData(year, data), key)
 			.call(position)
@@ -210,16 +214,26 @@ export default function motionChart(data) {
 			handle.text($(this).slider('value'));
 		},
 		slide(event, ui) {
+			console.log('slide event');
 			handle.text(ui.value);
 			window.pVals.currYear = ui.value;
 			window.pVals.calRatio();
-			displayYear(ui.value, data);
+			displayYear(ui.value);
 		},
 		min: 1800,
 		max: 2009,
 		change(event, ui) {
+			console.log('change event');
 			handle.text(ui.value);
+			// window.pVals.currYear = ui.value;
+			// window.pVals.calRatio();
+
 		},
+		stop(event, ui) {
+			console.log('stop event');
+			// window.pVals.currYear = ui.value;
+			// window.pVals.calRatio();
+		}
 	});
 	return chart;
 }
