@@ -144,13 +144,14 @@ export default function motionChart(data) {
 			return diff / allWidth;
 		},
 	};
+
 	function transition() {
 		const t = chart.svg
 			.transition('yeah')
 			.duration(d => {
 				console.log('PASSED duration:', window.pVals.duration - window.pVals.duration * window.pVals.lastTween);
-				// return window.pVals.duration - window.pVals.duration * window.pVals.lastTween;
-				return window.pVals.duration - window.pVals.duration * window.pVals.lastTween
+				return window.pVals.duration - window.pVals.duration * window.pVals.lastTween;
+				// return window.pVals.duration;
 			})
 			// .delay((d, i) => i * 5)
 			.ease(d3.easeLinear)
@@ -176,26 +177,18 @@ export default function motionChart(data) {
 		chart.svg.transition(t);
 	}
 
-	// Tweens the entire chart by first tweening the year, and then the data.
-	// For the interpolated data, the dots and label are redrawn.
-	// d3doc: transition.tween - run custom code during the transition.
+
 	function tweenYear() {
 		const year = d3.interpolateNumber(1800, 2009);
-		console.log('tweenYear -> currYear:', window.pVals.currYear);
 		return tween => {
-			// console.log(t);
 			tween += window.pVals.lastTween; // was it previously paused?
 			window.pVals.currTween = tween;
-			// console.log('tween', tween);
 			window.pVals.currYear = Math.round(year(tween));
-			// $('#slider').slider('value', window.pVals.currYear);
 			displayYear(year(tween));
 		};
 	}
 	// Updates the display to show the specified year.
 	function displayYear(year) {
-		// window.pVals.currYear = Math.round(year);
-		console.log('calculated duration -> ', window.pVals.duration - window.pVals.duration * window.pVals.lastTween);
 		if (window.pVals.duration - window.pVals.duration * window.pVals.lastTween === 0) {
 			console.log('IT IS A ZERO');
 		}
@@ -223,7 +216,7 @@ export default function motionChart(data) {
 		min: 1800,
 		max: 2009,
 		change(event, ui) {
-			console.log('change event');
+			// console.log('change event');
 			handle.text(ui.value);
 			// window.pVals.currYear = ui.value;
 			// window.pVals.calRatio();
