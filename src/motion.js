@@ -8,8 +8,7 @@ window.d3 = d3;
 
 export default function motionChart(data) {
 	const chart = chartFactory();
-	const width = chart.width - chart.margin.right - 500;
-	const height = chart.height - chart.margin.bottom - 400;
+	const { width, height } = chart;
 
 	function x(d) {
 		return d.income;
@@ -62,20 +61,20 @@ export default function motionChart(data) {
 	const yAxis = d3.axisLeft(yScale);
 
 	// Add the x-axis.
-	chart.svg
+	chart.container
 		.append('g')
 		.attr('class', 'x axis')
 		.attr('transform', `translate(0,${height})`)
 		.call(xAxis);
 
 	// Add the y-axis.
-	chart.svg
+	chart.container
 		.append('g')
 		.attr('class', 'y axis')
 		.call(yAxis);
 
 	// Add an x-axis label.
-	chart.svg
+	chart.container
 		.append('text')
 		.attr('class', 'x label')
 		.attr('text-anchor', 'end')
@@ -84,7 +83,7 @@ export default function motionChart(data) {
 		.text('income per capita, inflation-adjusted (dollars)');
 
 	// Add a y-axis label.
-	chart.svg
+	chart.container
 		.append('text')
 		.attr('class', 'y label')
 		.attr('text-anchor', 'end')
@@ -94,7 +93,7 @@ export default function motionChart(data) {
 		.text('life expectancy (years)');
 
 	// Add the year label; the value is set on transition.
-	const label = chart.svg
+	const label = chart.container
 		.append('text')
 		.attr('class', 'year label')
 		.attr('text-anchor', 'end')
@@ -103,7 +102,7 @@ export default function motionChart(data) {
 		.text(1800);
 
 	// Add a dot per nation. Initialize the data at 1800, and set the colors.
-	const dots = chart.svg
+	const dots = chart.container
 		.append('g')
 		.attr('class', 'dots')
 		.selectAll('.dot')
@@ -127,10 +126,7 @@ export default function motionChart(data) {
 	}
 
 	function stopPlaying() {
-		// console.log('stopPlaying', window.pVals.currYear);
-		// window.test = svg.transition('yeah').duration(0);
-
-		chart.svg.interrupt('yeah');
+		chart.container.interrupt('yeah');
 	}
 	window.pVals = {
 		lastTween: 0,
@@ -146,58 +142,41 @@ export default function motionChart(data) {
 	};
 
 	function transition() {
-		const t = chart.svg
+		const duration = window.pVals.duration - window.pVals.duration * window.pVals.lastTween;
+		const year = d3.interpolateNumber(window.pVals.currYear, 2009);
+		const t = chart.container
 			.transition('yeah')
-			.duration(d => {
-				console.log('PASSED duration:', window.pVals.duration - window.pVals.duration * window.pVals.lastTween);
-				return window.pVals.duration - window.pVals.duration * window.pVals.lastTween;
-				// return window.pVals.duration;
-			})
-			// .delay((d, i) => i * 5)
+			.duration(duration)
 			.ease(d3.easeLinear)
-			.tween('year', tweenYear);
+			.tween('year', () => {
+				return tween => {
+					// tween += window.pVals.lastTween; // was it previously paused?
+					window.pVals.currTween = tween;
+					window.pVals.currYear = Math.round(year(tween));
+					displayYear(year(tween));
+				};
+			});
 
 		window.trans = t;
 
 		t
-			.on('start', d => {
-				// ?????????????
-				// tweenYear()();
-				console.log('Transition started', d);
-			})
-			.on('end', d => {
-				console.log('Transition ended', d);
-				// why do we need this method?
-			})
-			.on('interrupt', (d, i, el) => {
+			.on('start', () => console.log('Transition started'))
+			.on('end', () => console.log('Transition ended'))
+			.on('interrupt', () => {
 				window.pVals.lastTween = window.pVals.currTween;
-				console.log('Transition interrupted', d);
+				console.log('Transition interrupted');
 			});
 		// Start a transition that interpolates the data based on year.
-		chart.svg.transition(t);
+		chart.container.transition(t);
 	}
 
-
-	function tweenYear() {
-		const year = d3.interpolateNumber(1800, 2009);
-		return tween => {
-			tween += window.pVals.lastTween; // was it previously paused?
-			window.pVals.currTween = tween;
-			window.pVals.currYear = Math.round(year(tween));
-			displayYear(year(tween));
-		};
-	}
 	// Updates the display to show the specified year.
 	function displayYear(year) {
-		if (window.pVals.duration - window.pVals.duration * window.pVals.lastTween === 0) {
-			console.log('IT IS A ZERO');
-		}
 		dots
 			.data(interpolateData(year, data), key)
 			.call(position)
 			.sort(order);
 		label.text(Math.round(year));
-		// console.log('current year', year);
 		$('#slider').slider('value', Math.round(year));
 	}
 
@@ -207,20 +186,16 @@ export default function motionChart(data) {
 			handle.text($(this).slider('value'));
 		},
 		slide(event, ui) {
-			console.log('slide event');
 			handle.text(ui.value);
 			window.pVals.currYear = ui.value;
 			window.pVals.calRatio();
+			stopPlaying();
 			displayYear(ui.value);
 		},
 		min: 1800,
 		max: 2009,
 		change(event, ui) {
-			// console.log('change event');
 			handle.text(ui.value);
-			// window.pVals.currYear = ui.value;
-			// window.pVals.calRatio();
-
 		},
 		stop(event, ui) {
 			console.log('stop event');

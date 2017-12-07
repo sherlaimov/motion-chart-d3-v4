@@ -1,13 +1,13 @@
 import * as d3 from 'd3';
 
 const protoChart = {
-	width: window.innerWidth,
-	height: window.innerHeight,
+	width: 960,
+	height: 500,
 	margin: {
-		left: 10,
+		left: 20,
 		right: 10,
 		top: 10,
-		bottom: 10,
+		bottom: 20,
 	},
 };
 
@@ -18,8 +18,8 @@ export default function chartFactory(opts, proto = protoChart) {
 		.select('body')
 		.append('svg')
 		.attr('id', chart.id || 'chart')
-		.attr('width', chart.width - chart.margin.right)
-		.attr('height', chart.height - chart.margin.bottom);
+		.attr('width', chart.width + chart.margin.left + chart.margin.right)
+		.attr('height', chart.height + chart.margin.bottom + chart.margin.top);
 
 	chart.container = chart.svg
 		.append('g')
