@@ -1,4 +1,4 @@
-import motionChart from './motion';
+import motionChart from './motion-class';
 
 // import '../styles/jquery-ui.css';
 import '../styles/style.css';
@@ -20,8 +20,6 @@ const getData = async url => {
 // const newData = fetchData();
 // console.log(newData);
 
-getData()
-	// .then(data => interpolateData(data))
-	.then(data => motionChart(data))
-	.catch(e => console.log(e));
-// console.log(newData);
+// getData()
+// 	.then(data => motionChart(data))
+// 	.catch(e => console.log(e));

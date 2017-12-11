@@ -1,4 +1,4 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 import chartFactory from './common';
 
 class MotionChart {
@@ -12,7 +12,7 @@ class MotionChart {
     this.reset();
   }
   reset() {
-    this.stopTransition();
+    // this.stopTransition();
     this.svg.selectAll('*').remove();
     this.scale(d3.scaleLinear(), d3.scaleLinear(), null);
   }
@@ -35,6 +35,7 @@ class MotionChart {
     this.xAxis = d3.axisBottom().scale(this.xScale);
     this.yScale = y;
     this.yAxis = d3.axisLeft().scale(this.yScale);
+    this.radiusScale = d3.scaleSqrt();
     if (color) {
       this.colorScale = color;
     }
@@ -44,10 +45,12 @@ class MotionChart {
     const maxRadius = 20;
     const maxLabelWidth = 40;
     const xDomain = this.computeDomain(this.xData);
+    console.log(this.xData);
     const yDomain = this.computeDomain(this.yData);
     this.radiusDomain = this.computeDomain(this.radiusData);
-    this.colorDomain = this.computeDomain(this.colorData);
-    this.computeTimeDomain();
+    console.log(this.radiusDomain);
+    // this.colorDomain = this.computeDomain(this.colorData);
+    // this.computeTimeDomain();
     const xScale = this.xScale
       .domain(xDomain)
       .range([1.5 * maxRadius, this.width - 1.5 * maxRadius - maxLabelWidth]);
@@ -71,6 +74,7 @@ class MotionChart {
   computeDomain(axis) {
     let hasValue = true;
     this.dataSource.forEach(item => {
+      // console.log(item[axis]);
       if (!(item[axis] instanceof Array) || typeof item[axis] === 'number') {
         console.log('UGH');
       }
@@ -107,6 +111,31 @@ class MotionChart {
     });
     return [min, max];
   }
+  computeTimeDomain() {
+    let startTime = this.startTime;
+    let endTime = this.endTime;
+    const axes = [this.xData, this.yData, this.radiusData, this.colorData];
+    axes.forEach(axis => {
+      this.dataSource.forEach(item => {
+        const data = item[axis];
+        // ******************* //
+        window._d = data;
+        if (!(typeof data === 'number') && !(typeof data === 'string')) {
+          data.domain().forEach(value => {
+            if (!this.startTime && (!startTime || startTime > value)) {
+              startTime = value;
+            }
+            if (!this.endTime && (!endTime || endTime < value)) {
+              endTime = value;
+            }
+          });
+        }
+      });
+    });
+    this.startTime = startTime;
+    this.endTime = endTime;
+  }
+
   createDate(date) {
     if (typeof date === 'number') {
       return new Date(date, 0, 1);
@@ -162,4 +191,112 @@ class MotionChart {
       .attr('transform', 'rotate(-90)')
       .text(this.yData);
   }
+  createItems() {
+    this.items = this.svg
+      .append('g')
+      .selectAll('.item')
+      .data(this.dataSource)
+      .enter()
+      .append('g')
+      .classed('element', true)
+      .each(function(item) {
+        const label = item[this.labelData];
+        const g = d3.select(this);
+        console.log(label);
+        // g.classed('selection', self._selection[label]);
+        g
+          .append('text')
+          .classed('label', true)
+          .attr('y', 1)
+          .text(label);
+        g.append('circle');
+      });
+    // .on('click', function() {
+    //   d3.select(this).classed('selection', !d3.select(this).classed('selection'));
+    // });
+    this.update(this.startTime);
+  }
+  hasValue(item, axis, date) {
+    const data = item[axis];
+    // console.log(item);
+    if (typeof data === 'number' || typeof data === 'string') {
+      return true;
+    }
+    return date >= data.__min && date <= data.__max;
+  }
+
+  computeValue(item, axis, date) {
+    const data = item[axis];
+    if (!!data && data.constructor && data.call && data.apply) {
+      return data(date);
+    }
+    return data;
+  }
+  update(date) {
+    const self = this;
+    this.currentTime = date;
+    // this.updateTimeSlider(date);
+    this.items.each(function(data) {
+      if (
+        self.hasValue(data, self.xData, date) &&
+        self.hasValue(data, self.yData, date) &&
+        self.hasValue(data, self.radiusData, date)
+      ) {
+        const x = self.xScale(self.computeValue(data, self.xData, date));
+        const y = self.yScale(self.computeValue(data, self.yData, date));
+        const r = self.computeValue(data, self.radiusData, date);
+        const radius = self.radiusScale(r < 0 ? 0 : r);
+        // const color = this.hasValue(data, this.colorData, date)
+        //   ? this.colorScale(this.computeValue(data, this.colorData, date))
+        //   : '#fff';
+        const textPosition = 1 + 1.1 * radius;
+        d3.select(this).style('display', 'block');
+        d3.select(this).attr('transform', `translate( ${x}, ${y})`);
+        d3
+          .select(this)
+          .selectAll('circle')
+          .attr('r', radius)
+          .style('fill', '#000');
+        d3
+          .select(this)
+          .selectAll('text')
+          .attr('transform', `translate( ${textPosition}, 0)`);
+      } else {
+        d3.select(this).style('display', 'none');
+      }
+    });
+    this.items.sort((a, b) => b[this.radiusData] - a[this.radiusData]);
+  }
 }
+
+const selector = document.getElementById('selector');
+const chart = new MotionChart();
+
+function update(_data) {
+  const data = _data;
+  const axes = selector.options[selector.selectedIndex].value.split(',').map(text => text.trim());
+  console.log(axes);
+  chart.reset();
+  console.log(data);
+  // axes = ["Annual Revenue", "Annual Income", "Shareholder Equity", "Market Capitalization"]
+  chart.data(data, 'name', axes[0], axes[1], axes[2], 'population');
+  chart.time(new Date('1800/1/1'), new Date('2009/1/1'));
+  // chart.select('Apple');
+  // chart.select('Google');
+  // chart.select('Microsoft');
+  chart.draw();
+  // chart.startTransition();
+}
+
+const fetchData = () => {
+  fetch('../data/nations.json')
+    .then(res => res.json())
+    .then(data => data)
+    .then(data => update(data))
+    .catch(e => console.log(e));
+};
+
+fetchData();
+selector.addEventListener('change', () => {
+  fetchData();
+});
