@@ -30,7 +30,9 @@ export default function motionChart(data) {
     _data
       .attr('cx', d => xScale(x(d)))
       .attr('cy', d => yScale(y(d)))
-      .attr('r', d => radiusScale(radius(d)));
+      .attr('r', d => {
+        console.log(radiusScale(radius(d)));
+        return radiusScale(radius(d))});
   }
 
   // Defines a sort order so that the smallest dots are drawn on top.

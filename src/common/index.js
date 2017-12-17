@@ -7,7 +7,7 @@ const protoChart = {
 		left: 20,
 		right: 10,
 		top: 10,
-		bottom: 20,
+		bottom: 40,
 	},
 };
 
