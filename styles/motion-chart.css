@@ -1,0 +1,70 @@
+text {
+  fill: #888;
+}
+
+svg {
+  font-size: 9px;
+}
+
+.element circle {
+  stroke-width: 0.5px;
+  stroke: #444;
+  stroke-opacity: 1;
+  fill-opacity: 0.6;
+}
+
+.element text {
+  fill: #000;
+  fill-opacity: 0.2;
+  alignment-baseline: middle;
+}
+
+.element:hover circle {
+  stroke-width: 1px;
+  stroke: #000;
+  fill-opacity: 0.8;
+}
+
+.element:hover text {
+  fill: #000;
+  fill-opacity: 0.5;
+}
+
+.grid {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: 0.04;
+  stroke-width: 0.5px;
+}
+
+.origin {
+  stroke: #aaa;
+  stroke-opacity: 0.4;
+  stroke-dasharray: 4 2;
+  stroke-width: 0.75px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  stroke-width: 0.25px;
+}
+
+.axis text {
+  font-family: 'Merriweather Sans', Arial, sans-serif;
+  font-size: 9px;
+}
+
+.selection circle,
+.selection:hover circle {
+  stroke: #000;
+  stroke-width: 1.5px;
+  fill-opacity: 1;
+}
+
+.selection text,
+.selection:hover text {
+  fill: #000;
+  fill-opacity: 1;
+}

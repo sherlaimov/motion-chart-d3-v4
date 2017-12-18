@@ -13,9 +13,9 @@ class MotionChart {
     this.reset();
   }
   reset() {
-    this.stopTransition();
+    // this.stopTransition();
     this.container.selectAll('*').remove();
-    this.scale(d3.scaleLog(), d3.scaleLinear(), null);
+    this.scale(d3.scaleLog(), d3.scaleLinear(), null, d3.scaleLinear());
   }
 
   data(dataSource, label, x, y, radius, color) {
@@ -32,10 +32,12 @@ class MotionChart {
     this.startTime = start;
     this.endTime = end;
   }
-  scale(x, y, color) {
+  scale(x, y, color, grid) {
     this.xScale = x;
     this.xAxis = d3.axisBottom().scale(this.xScale);
     this.yScale = y;
+    this.gridScale = grid;
+    this.gridAxis = d3.axisBottom().scale(this.gridScale);
     this.yAxis = d3.axisLeft().scale(this.yScale);
     this.radiusScale = d3.scaleSqrt();
     if (color) {
@@ -65,6 +67,8 @@ class MotionChart {
   stopTransition() {
     if (this.container) {
       this.container.transition().duration(0);
+      this.timeSliderHead.style('display', 'none');
+      this.timeSliderPlayButton.style('display', 'block');
     }
   }
 
@@ -88,6 +92,15 @@ class MotionChart {
       .domain([xScale.invert(0), xScale.invert(this.width)])
       .range([0, this.width])
       .clamp(true);
+
+    const gridScale = this.gridScale
+      .domain(xDomain)
+      .range([1.5 * maxRadius, this.width - 1.5 * maxRadius - maxLabelWidth]);
+    this.gridScale = this.gridScale
+      .domain([gridScale.invert(0), gridScale.invert(this.width)])
+      .range([0, this.width])
+      .clamp(true);
+
     const yScale = this.yScale
       .domain(yDomain)
       .range([1.5 * maxRadius, this.chartHeight - 1.5 * maxRadius]);
@@ -219,7 +232,7 @@ class MotionChart {
       .append('g')
       .classed('axis x', true)
       .attr('transform', `translate(0, ${this.chartHeight})`)
-      .call(this.xAxis.tickSize(2, 0, 2));
+      .call(this.gridAxis.tickSize(2, 0, 2));
     rules
       .append('g')
       .classed('axis y', true)
@@ -229,7 +242,9 @@ class MotionChart {
       .append('g')
       .classed('grid', true)
       .attr('transform', `translate(0, ${this.chartHeight})`)
-      .call(this.xAxis.tickSize(-this.chartHeight, 0, -this.chartHeight).tickFormat(value => ''));
+      .call(
+        this.gridAxis.tickSize(-this.chartHeight, 0, -this.chartHeight).tickFormat(value => ''),
+      );
     rules
       .append('g')
       .classed('grid', true)
@@ -321,18 +336,17 @@ class MotionChart {
       .attr('transform', 'translate(0,4)')
       .classed('slider-head', true)
       .attr('pointer-events', 'all')
-      .attr('cursor', 'ew-resize');
+      .attr('cursor', 'pointer');
+    // .attr('cursor', 'ew-resize');
     this.timeSliderHead
       .append('circle')
       .attr('cy', 0)
       .attr('r', 12)
       .style('fill', '#fff')
       .style('stroke', '#888');
-      this.timeSliderHead 
-      .append('rect')
-      .attr('x', 0)
-      .attr('height', 5)
-      .attr('width', 5)
+    this.timeSliderHead
+      .append('polygon')
+      .attr('points', '-5,-5 -5,5 5,5, 5 -5')
       .style('fill', '#888');
     this.timeSliderHead
       .append('circle')
@@ -341,23 +355,8 @@ class MotionChart {
       .style('fill', 'none')
       .style('opacity', 1);
     this.timeSliderHead.style('display', 'none');
-    this.timeSliderHead.call(
-      d3
-        .drag()
-        .on('start', () => (this.timeSliderDragged = false))
-        .on('drag', () => {
-          this.timeSliderDragged = true;
-          this.stopTransition();
-          const date = this.timeScale.invert(d3.event.x);
-          this.update(date);
-        })
-        .on('end', () => {
-          if (this.timeSliderDragged && this.endTime.getTime() - this.currentTime.getTime() > 0) {
-            this.timeSliderPlayButton.style('display', 'block');
-            this.timeSliderHead.style('display', 'none');
-          }
-        }),
-    );
+    this.timeSliderHead.on('click', () => this.stopTransition());
+
     this.timeSliderPlayButton = g
       .append('g')
       .classed('play-button', true)
@@ -380,6 +379,23 @@ class MotionChart {
       .append('polygon')
       .attr('points', '-4,-5 -4,5 6,0')
       .style('fill', '#888');
+    this.timeSliderPlayButton.call(
+      d3
+        .drag()
+        .on('start', () => (this.timeSliderDragged = false))
+        .on('drag', () => {
+          this.timeSliderDragged = true;
+          this.stopTransition();
+          const date = this.timeScale.invert(d3.event.x);
+          this.update(date);
+        })
+        .on('end', () => {
+          if (this.timeSliderDragged && this.endTime.getTime() - this.currentTime.getTime() > 0) {
+            this.timeSliderPlayButton.style('display', 'block');
+            this.timeSliderHead.style('display', 'none');
+          }
+        }),
+    );
     this.timeSliderPlayButton.on('click', () => this.startTransition());
   }
   updateTimeSlider(date) {
