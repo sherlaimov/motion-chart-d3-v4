@@ -2,21 +2,28 @@
 import * as d3 from 'd3';
 import chartFactory from './common';
 
+window.d3 = d3;
 class MotionChart {
   constructor() {
     this.chart = chartFactory({ id: 'motion-chart' });
     this.width = this.chart.width;
     this.height = this.chart.height;
     this.container = this.chart.container;
-    this.chartWidth = this.width - this.chart.margin.left - this.chart.margin.right;
+    this.legendWidth = (this.width - this.chart.margin.left - this.chart.margin.right) / 8;
+    this.chartWidth =
+      this.width - this.chart.margin.left - this.chart.margin.right - this.legendWidth;
     this.chartHeight = this.height - this.chart.margin.top - this.chart.margin.bottom;
     this.selection = {};
     this.reset();
   }
   reset() {
-    // this.stopTransition();
     this.container.selectAll('*').remove();
-    this.scale(d3.scaleLog(), d3.scaleLinear(), null, d3.scaleLinear());
+    this.scale(
+      d3.scaleLog(),
+      d3.scaleLinear(),
+      d3.scaleOrdinal(d3.schemeCategory20),
+      d3.scaleLinear(),
+    );
   }
 
   data(dataSource, label, x, y, radius, color) {
@@ -84,22 +91,21 @@ class MotionChart {
     console.log('this.radiusData', this.radiusData, this.radiusDomain);
     this.colorDomain = this.computeDomain(this.colorData);
     console.log('this.colorData', this.colorData);
-    // this.colorDomain = d3.scaleOrdinal(d3.schemeCategory10);
     this.computeTimeDomain();
     const xScale = this.xScale
       .domain(xDomain)
-      .range([1.5 * maxRadius, this.width - 1.5 * maxRadius - maxLabelWidth]);
+      .range([1.5 * maxRadius, this.chartWidth - 1.5 * maxRadius - maxLabelWidth]);
     this.xScale = this.xScale
-      .domain([xScale.invert(0), xScale.invert(this.width)])
-      .range([0, this.width])
+      .domain([xScale.invert(0), xScale.invert(this.chartWidth)])
+      .range([0, this.chartWidth])
       .clamp(true);
 
     const gridScale = this.gridScale
       .domain(xDomain)
-      .range([1.5 * maxRadius, this.width - 1.5 * maxRadius - maxLabelWidth]);
+      .range([1.5 * maxRadius, this.chartWidth - 1.5 * maxRadius - maxLabelWidth]);
     this.gridScale = this.gridScale
-      .domain([gridScale.invert(0), gridScale.invert(this.width)])
-      .range([0, this.width])
+      .domain([gridScale.invert(0), gridScale.invert(this.chartWidth)])
+      .range([0, this.chartWidth])
       .clamp(true);
 
     const yScale = this.yScale
@@ -121,7 +127,7 @@ class MotionChart {
         { stop: 0.33, color: '#2ff076' },
         { stop: 0.5, color: '#d0ff2f' },
         { stop: 0.66, color: '#ffff2f' },
-        { stop: 1.0, color: '#ff2f2f' }
+        { stop: 1.0, color: '#ff2f2f' },
       ];
       const linearGradient = this.container
         .append('defs')
@@ -141,10 +147,6 @@ class MotionChart {
         .domain(gradientStops.map(d3.scaleLinear().domain(this.colorDomain).invert))
         .range(gradientColors);
     }
-    if (!this.colorScale) {
-      // this._colorScale = d3.scale.category10();
-      this.colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-    }
   }
 
   computeDomain(axis) {
@@ -160,11 +162,11 @@ class MotionChart {
     }
     const min = d3.min(
       this.dataSource,
-      item => (typeof item[axis] === 'number' ? item[axis] : d3.min(item[axis], pair => pair[1]))
+      item => (typeof item[axis] === 'number' ? item[axis] : d3.min(item[axis], pair => pair[1])),
     );
     const max = d3.max(
       this.dataSource,
-      item => (typeof item[axis] === 'number' ? item[axis] : d3.max(item[axis], pair => pair[1]))
+      item => (typeof item[axis] === 'number' ? item[axis] : d3.max(item[axis], pair => pair[1])),
     );
     this.dataSource.forEach(item => {
       // Convert time series into a multi-value D3 scale and cache time range.
@@ -225,6 +227,7 @@ class MotionChart {
     this.createTimeSlider();
     this.createRules();
     this.createItems();
+    this.createLegend();
   }
   createRules() {
     const rules = this.container.append('g').classed('rules', true);
@@ -244,7 +247,7 @@ class MotionChart {
       .classed('grid', true)
       .attr('transform', `translate(0, ${this.chartHeight})`)
       .call(
-        this.gridAxis.tickSize(-this.chartHeight, 0, -this.chartHeight).tickFormat(value => '')
+        this.gridAxis.tickSize(-this.chartHeight, 0, -this.chartHeight).tickFormat(value => ''),
       );
     rules
       .append('g')
@@ -270,7 +273,6 @@ class MotionChart {
       .text(this.yData);
   }
   createTimeSlider() {
-    const width = this.width;
     // const w = this.chartWidth * (this.colorDomain ? 0.32 : 0.64);
     const w = this.chartWidth;
     // const x = width - this.chart.margin.left - w;
@@ -295,8 +297,10 @@ class MotionChart {
       .tickSize(11, 0, 11)
       .tickValues(timeTicks)
       .tickFormat(value => value.getFullYear());
-    const g = this.container.append('g').attr('transform', `translate( ${x}, ${y + 15})`);
-    // var self = this;
+    const g = this.container
+      .append('g')
+      .classed('time-slider', true)
+      .attr('transform', `translate( ${0}, ${y + 15})`);
     g
       .append('g')
       .classed('axis slider', true)
@@ -395,7 +399,7 @@ class MotionChart {
             this.timeSliderPlayButton.style('display', 'block');
             this.timeSliderHead.style('display', 'none');
           }
-        })
+        }),
     );
     this.timeSliderPlayButton.on('click', () => this.startTransition());
   }
@@ -420,7 +424,7 @@ class MotionChart {
       .enter()
       .append('g')
       .classed('element', true)
-      .each(function(item) {
+      .each(function(item, i) {
         const label = item[self.labelData];
         const g = d3.select(this);
         g.classed('selection', self.selection[label]);
@@ -429,16 +433,55 @@ class MotionChart {
           .classed('label', true)
           .attr('y', 1)
           .text(label);
-        g.append('circle');
+        g.append('circle').style('fill', () => self.colorScale(i));
       })
       .on('click', function() {
         d3.select(this).classed('selection', !d3.select(this).classed('selection'));
       });
     this.update(this.startTime);
   }
+
+  createLegend() {
+    const self = this;
+    window.items = this.items;
+    const legendRectSize = 15;
+    const legendSpacing = 5;
+    this.legend = this.container.append('g').classed('legend', true);
+    const legendItems = this.legend
+      .selectAll('.item')
+      .data(this.dataSource)
+      .enter()
+      .append('g')
+      .classed('legend-item', true)
+      .attr('transform', (d, i) => `translate(${this.chartWidth + 20}, ${i * 12})`)
+      .each(function(item, i) {
+        const label = item[self.labelData];
+        const g = d3.select(this);
+        g
+          .append('rect')
+          .attr('height', legendRectSize)
+          .attr('width', legendRectSize)
+          .style('fill', self.colorScale(i));
+        g
+          .append('text')
+          .attr('x', legendRectSize + legendSpacing)
+          .attr('y', legendRectSize - legendSpacing)
+          .text(label);
+      });
+    legendItems.on('click', function() {
+      const itemName = d3.select(this).data()[0].name;
+      self.selectItem(itemName);
+    });
+  }
+
+  selectItem(name) {
+    this.items.filter(item => item.name === name).classed('selection', function() {
+      return !d3.select(this).classed('selection');
+    });
+  }
+
   static hasValue(item, axis, date) {
     const data = item[axis];
-    // console.log(item);
     if (typeof data === 'number' || typeof data === 'string') {
       return true;
     }
@@ -448,9 +491,6 @@ class MotionChart {
   static computeValue(item, axis, date) {
     const data = item[axis];
     if (!!data && data.constructor && data.call && data.apply) {
-      if (axis === 'population') {
-        // console.log(item.name, data(date));
-      }
       return data(date);
     }
     return data;
@@ -461,7 +501,6 @@ class MotionChart {
     window.date = this.currentTime;
     this.updateTimeSlider(date);
     this.items.each(function(data) {
-      // console.log(data);
       if (
         MotionChart.hasValue(data, self.xData, date) &&
         MotionChart.hasValue(data, self.yData, date) &&
@@ -471,18 +510,13 @@ class MotionChart {
         const y = self.yScale(MotionChart.computeValue(data, self.yData, date));
         const r = MotionChart.computeValue(data, self.radiusData, date);
         const radius = self.radiusScale(r < 0 ? 0 : r);
-        // console.log(radius);
-        const color = MotionChart.hasValue(data, self.colorData, date)
-          ? self.colorScale(MotionChart.computeValue(data, self.colorData, date))
-          : '#fff';
         const textPosition = 1 + 1.1 * radius;
         d3.select(this).style('display', 'block');
         d3.select(this).attr('transform', `translate( ${x}, ${y})`);
         d3
           .select(this)
           .selectAll('circle')
-          .attr('r', radius)
-          .style('fill', color);
+          .attr('r', radius);
         d3
           .select(this)
           .selectAll('text')
@@ -508,8 +542,6 @@ function update(_data) {
   chart.data(data, 'name', axes[0], axes[1], axes[2], 'population');
   chart.time(new Date('1800/1/1'), new Date('2009/1/1'));
   chart.select('Ukraine');
-  // chart.select('Google');
-  // chart.select('Microsoft');
   chart.draw();
   // chart.startTransition();
 }
