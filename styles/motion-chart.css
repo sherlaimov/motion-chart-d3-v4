@@ -1,9 +1,42 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:100,400,500&subset=cyrillic');
+
+html {
+  min-width: 1040px;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+}
+
+body {
+  background: #fcfcfa;
+  color: #333;
+  margin: 1em auto 4em auto;
+  position: relative;
+  width: 1000px;
+}
+
+header,
+footer,
+aside,
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'PT Sans', sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: #000;
+}
+
 text {
   fill: #888;
 }
 
 svg {
-  font-size: 9px;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-size: 12px;
 }
 
 .element circle {
@@ -52,8 +85,11 @@ svg {
 }
 
 .axis text {
-  font-family: 'Merriweather Sans', Arial, sans-serif;
-  font-size: 9px;
+  font-size: 10px;
+}
+
+.slider-ticker text {
+  font-size: 10px;
 }
 
 .selection circle,

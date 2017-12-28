@@ -1,8 +1,8 @@
 import * as d3 from 'd3';
 
 const protoChart = {
-	width: 960,
-	height: 500,
+	width: 1000,
+	height: 540,
 	margin: {
 		left: 20,
 		right: 10,

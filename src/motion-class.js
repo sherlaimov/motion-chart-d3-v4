@@ -19,10 +19,10 @@ class MotionChart {
   reset() {
     this.container.selectAll('*').remove();
     this.scale(
-      d3.scaleLog(),
+      d3.scaleLinear(),
       d3.scaleLinear(),
       d3.scaleOrdinal(d3.schemeCategory20),
-      d3.scaleLinear(),
+      d3.scaleLinear()
     );
   }
 
@@ -127,7 +127,7 @@ class MotionChart {
         { stop: 0.33, color: '#2ff076' },
         { stop: 0.5, color: '#d0ff2f' },
         { stop: 0.66, color: '#ffff2f' },
-        { stop: 1.0, color: '#ff2f2f' },
+        { stop: 1.0, color: '#ff2f2f' }
       ];
       const linearGradient = this.container
         .append('defs')
@@ -162,11 +162,11 @@ class MotionChart {
     }
     const min = d3.min(
       this.dataSource,
-      item => (typeof item[axis] === 'number' ? item[axis] : d3.min(item[axis], pair => pair[1])),
+      item => (typeof item[axis] === 'number' ? item[axis] : d3.min(item[axis], pair => pair[1]))
     );
     const max = d3.max(
       this.dataSource,
-      item => (typeof item[axis] === 'number' ? item[axis] : d3.max(item[axis], pair => pair[1])),
+      item => (typeof item[axis] === 'number' ? item[axis] : d3.max(item[axis], pair => pair[1]))
     );
     this.dataSource.forEach(item => {
       // Convert time series into a multi-value D3 scale and cache time range.
@@ -196,7 +196,6 @@ class MotionChart {
       this.dataSource.forEach(item => {
         const data = item[axis];
         // ******************* //
-
         if (!(typeof data === 'number') && !(typeof data === 'string')) {
           data.domain().forEach(value => {
             if (!this.startTime && (!startTime || startTime > value)) {
@@ -247,7 +246,7 @@ class MotionChart {
       .classed('grid', true)
       .attr('transform', `translate(0, ${this.chartHeight})`)
       .call(
-        this.gridAxis.tickSize(-this.chartHeight, 0, -this.chartHeight).tickFormat(value => ''),
+        this.gridAxis.tickSize(-this.chartHeight, 0, -this.chartHeight).tickFormat(value => '')
       );
     rules
       .append('g')
@@ -296,7 +295,7 @@ class MotionChart {
       .scale(this.timeScale)
       .tickSize(11, 0, 11)
       .tickValues(timeTicks)
-      .tickFormat(value => value.getFullYear());
+      .tickFormat(value => MotionChart.formatDate(value));
     const g = this.container
       .append('g')
       .classed('time-slider', true)
@@ -399,16 +398,40 @@ class MotionChart {
             this.timeSliderPlayButton.style('display', 'block');
             this.timeSliderHead.style('display', 'none');
           }
-        }),
+        })
     );
     this.timeSliderPlayButton.on('click', () => this.startTransition());
   }
+
+  static formatDate(date) {
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+
+    const day = date.getDate();
+    const monthIndex = date.getMonth();
+    const year = date.getFullYear();
+
+    return `${day} ${monthNames[monthIndex]} ${year}`;
+  }
+
   updateTimeSlider(date) {
     const x = this.timeScale(date);
     this.timeSlider.attr('width', x + 6);
     this.timeSliderHead.attr('transform', `translate( ${x},4)`);
     this.timeSliderPosition.attr('transform', `translate( ${x}, 0)`);
-    this.timeSliderPosition.selectAll('text').text(date.getFullYear());
+    this.timeSliderPosition.selectAll('text').text(MotionChart.formatDate(date));
     this.timeSliderPlayButton.attr('transform', `translate( ${x}, 4)`);
     if (this.endTime.getTime() - date.getTime() <= 0) {
       this.timeSliderHead.style('display', 'block');
@@ -436,6 +459,7 @@ class MotionChart {
         g.append('circle').style('fill', () => self.colorScale(i));
       })
       .on('click', function() {
+        window._el = d3.select(this).data()[0];
         d3.select(this).classed('selection', !d3.select(this).classed('selection'));
       });
     this.update(this.startTime);
@@ -469,13 +493,13 @@ class MotionChart {
           .text(label);
       });
     legendItems.on('click', function() {
-      const itemName = d3.select(this).data()[0].name;
+      const itemName = d3.select(this).data()[0].producer;
       self.selectItem(itemName);
     });
   }
 
   selectItem(name) {
-    this.items.filter(item => item.name === name).classed('selection', function() {
+    this.items.filter(item => item.producer === name).classed('selection', function() {
       return !d3.select(this).classed('selection');
     });
   }
@@ -539,15 +563,17 @@ function update(_data) {
   chart.reset();
   console.log(data);
   // axes = ["Annual Revenue", "Annual Income", "Shareholder Equity", "Market Capitalization"]
-  chart.data(data, 'name', axes[0], axes[1], axes[2], 'population');
-  chart.time(new Date('1800/1/1'), new Date('2009/1/1'));
-  chart.select('Ukraine');
+
+  // chart.data(data, 'name', axes[0], axes[1], axes[2], 'population');
+  chart.data(data, 'producer', axes[0], axes[1], axes[2], 'avgDelivery');
+  chart.time(new Date('2016/1/1'), new Date('2017/1/1'));
+  // chart.select('Ukraine');
   chart.draw();
   // chart.startTransition();
 }
 
 const fetchData = () => {
-  fetch('../data/nations.json')
+  fetch('../data/crude_2016.json')
     .then(res => res.json())
     .then(data => data)
     .then(data => update(data))

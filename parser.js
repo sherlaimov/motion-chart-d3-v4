@@ -1,39 +1,10 @@
 const fs = require('fs');
-const nodeXlsx = require('node-xlsx');
+// const nodeXlsx = require('node-xlsx');
 const xlsx = require('xlsx');
-// const writeStream = fs.createWriteStream('secret.xls');
 
-const requiredFields = [
-  'Дата',
-  'Покупатель',
-  'Производитель',
-  'Вес, кг',
-  'Цена в валюте контракта - 1т',
-];
+const writeStream = fs.createWriteStream('crude_2016.json');
 
-const dataScheme = {
-  producer: 'Dow Chemical',
-  consumer: 'Lava',
-  weight: [['data', 'Вес, кг']],
-  price: [['data', 'Цена в валюте контракта - 1т']],
-};
-
-// const workSheetsFromFile = xlsx.parse(${__dirname}/Crude Oil Export 2016 коррект.xls);
-// const headers = workSheetsFromFile[0].data.shift();
-// const firstLine = workSheetsFromFile[0].data[0];
-// console.log(headers);
-// console.log(firstLine);
-// console.log(workSheetsFromFile[0]);
-
-// const testData = [
-//   [1, 2, 3],
-//   [true, false, null, 'sheetjs'],
-//   ['foo', 'bar', new Date('2014-02-19T14:30Z'), '0.3'],
-//   ['baz', null, 'qux'],
-// ];
-// const buffer = nodeXlsx.build([{ name: 'mySheetName', data: data }]); // Returns a buffer
-
-// writeStream.write(buffer);
+const requiredFields = ['Дата', 'Производитель', 'Вес, кг', 'Цена в валюте контракта - 1т'];
 
 // ********** Original XLSX **************
 const workbook = xlsx.readFile(`${__dirname}/Crude Oil Export 2016 коррект.xls`);
@@ -52,17 +23,38 @@ neededFields.forEach(field => producerNames.add(field['Производител�
 
 const output = [];
 producerNames.forEach(name => {
-  const producerObj = neededFields
-    .filter(field => field['Производитель'] === name)
-    .map((field, i, arr) => {
-      return {
-        producer: field['Производитель'],
-        consumer: field['Покупатель'],
-        weight: arr.map(field => [field['Дата'], field['Вес, кг']]),
-        price: arr.map(field => [field['Дата'], field['Цена в валюте контракта - 1т']]),
-      };
-    });
-  output.push(...producerObj);
+  const producerObj = {
+    producer: '',
+    weight: [],
+    avgDelivery: [],
+    accumulatedDelivery: [],
+    price: []
+  };
+  const filtered = neededFields.filter(field => field['Производитель'] === name);
+  producerObj.producer = filtered[0]['Производитель'];
+  filtered.forEach((field, i, arr) => {
+    const weight = Number(field['Вес, кг'].replace(/\,/g, ''));
+    const price = Number(field['Цена в валюте контракта - 1т']);
+    producerObj.weight.push([field['Дата'], weight]);
+    producerObj.price.push([field['Дата'], price]);
+  });
+
+  producerObj.weight.forEach((value, i, arr) => {
+    const date = value[0];
+    const sumPrev = arr.reduce((a, b, index) => {
+      if (index <= i) {
+        return a + b[1];
+      }
+      return a;
+    }, 0);
+    const avgDelivery = sumPrev / (i + 1);
+    producerObj.avgDelivery.push([date, avgDelivery]);
+    producerObj.accumulatedDelivery.push([date, sumPrev]);
+  });
+
+  output.push(producerObj);
 });
 
-console.log(output);
+writeStream.write(JSON.stringify(output));
+
+console.log(JSON.stringify(output, null, 2));
