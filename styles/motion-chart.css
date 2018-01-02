@@ -56,11 +56,13 @@ svg {
   stroke-width: 1px;
   stroke: #000;
   fill-opacity: 0.8;
+  cursor: pointer;
 }
 
 .element:hover text {
   fill: #000;
   fill-opacity: 0.5;
+  cursor: pointer;
 }
 
 .grid {
@@ -103,4 +105,9 @@ svg {
 .selection:hover text {
   fill: #000;
   fill-opacity: 1;
+}
+
+.selection > line {
+  fill: none;
+  stroke: rgb(105, 105, 105);
 }

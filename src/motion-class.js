@@ -459,10 +459,97 @@ class MotionChart {
         g.append('circle').style('fill', () => self.colorScale(i));
       })
       .on('click', function() {
-        window._el = d3.select(this).data()[0];
-        d3.select(this).classed('selection', !d3.select(this).classed('selection'));
+        // .data()[0]
+        window._el = d3.select(this);
+        // d3.select(this).classed('selection', !d3.select(this).classed('selection'));
+        self.showSelectedItemData(d3.select(this));
       });
     this.update(this.startTime);
+  }
+
+  showSelectedItemData(item) {
+    item.classed('selection', !item.classed('selection'));
+    const string = item.attr('transform');
+    const [x, y] = string.substring(string.indexOf('(') + 1, string.indexOf(')')).split(',');
+    const radius = item.select('circle').attr('r');
+
+    if (item.classed('selection')) {
+      item.raise();
+      item
+        .append('line')
+        .classed('guide-line-y', true)
+        // .style('stroke', 'black')
+        .attr('y1', radius)
+        .attr('y2', this.chartHeight - y);
+
+      item
+        .append('line')
+        .classed('guide-line-x', true)
+        // .style('stroke', 'black')
+        .attr('x1', -radius)
+        .attr('x2', -x);
+
+      const xLabel = item.append('g').classed('x value', true);
+      const yLabel = item.append('g').classed('y value', true);
+
+      const textX = xLabel
+        .append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        // .attr('dy', '.35em')
+        .attr('text-anchor', 'middle')
+        // .attr('alignment-baseline', 'central')
+        .style('fill', 'black')
+        .style('font-size', '10px')
+        .text(() => {
+          const data = item.data()[0];
+          return Math.round(data[this.xData](this.currentTime));
+        });
+
+      const textY = yLabel
+        .append('text')
+        .attr('text-anchor', 'middle')
+        .style('fill', 'black')
+        .style('font-size', '10px')
+        .text(() => {
+          const data = item.data()[0];
+          return Math.round(data[this.yData](this.currentTime));
+        });
+
+      const bboxX = textX.node().getBBox();
+      const bboxY = textY.node().getBBox();
+
+      xLabel
+        .insert('rect', ':first-child')
+        .attr('x', bboxX.x)
+        .attr('y', bboxX.y)
+        .attr('width', bboxX.width)
+        .attr('height', bboxX.height)
+        .style('fill', '#ccc')
+        // .style('fill-opacity', '.3')
+        .style('stroke', '#666')
+        .style('stroke-width', '1px');
+
+      yLabel
+        .insert('rect', ':first-child')
+        .attr('x', bboxY.x)
+        .attr('y', bboxY.y)
+        .attr('width', bboxY.width)
+        .attr('height', bboxY.height)
+        .style('fill', '#ccc')
+        // .style('fill-opacity', '.3')
+        .style('stroke', '#666')
+        .style('stroke-width', '1px');
+
+      xLabel.attr('transform', `translate(${0}, ${this.chartHeight - y + bboxX.height / 2 + 1})`);
+      yLabel.attr('transform', `translate(${-x - bboxY.height / 2 + 1}, 0)rotate(-90)`);
+      // console.log('bboxY.height / 22',  bboxY.height / 2);
+      // translate(200,100)rotate(-45)
+      // yLabel.attr('transform', 'rotate(-90)');
+    } else {
+      item.selectAll('line').remove();
+      item.selectAll('g').remove();
+    }
   }
 
   createLegend() {
@@ -535,16 +622,38 @@ class MotionChart {
         const r = MotionChart.computeValue(data, self.radiusData, date);
         const radius = self.radiusScale(r < 0 ? 0 : r);
         const textPosition = 1 + 1.1 * radius;
-        d3.select(this).style('display', 'block');
-        d3.select(this).attr('transform', `translate( ${x}, ${y})`);
-        d3
-          .select(this)
-          .selectAll('circle')
-          .attr('r', radius);
-        d3
-          .select(this)
-          .selectAll('text')
-          .attr('transform', `translate( ${textPosition}, 0)`);
+        const currElem = d3.select(this);
+        currElem.style('display', 'block');
+        currElem.attr('transform', `translate( ${x}, ${y})`);
+
+        currElem.selectAll('circle').attr('r', radius);
+        currElem.selectAll('text.label').attr('transform', `translate( ${textPosition}, 0)`);
+
+        if (currElem.classed('selection')) {
+          // currElem.raise();
+          currElem
+            .selectAll('.guide-line-y')
+            .attr('x1', null)
+            .attr('y1', radius)
+            .attr('x2', null)
+            .attr('y2', self.chartHeight - y);
+
+          currElem
+            .selectAll('.guide-line-x')
+            .attr('x1', -radius)
+            .attr('x2', -x);
+
+          const textX = currElem.select('.x.value').select('text');
+          const textY = currElem.select('.y.value').select('text');
+          currElem
+            .selectAll('.x.value')
+            .attr('transform', `translate( ${0}, ${self.chartHeight - y + 7})`);
+
+          currElem.selectAll('.y.value').attr('transform', `translate(${-x - 6}, 0)rotate(-90)`);
+
+          textX.text(Math.round(data[self.xData](self.currentTime)));
+          textY.text(Math.round(data[self.yData](self.currentTime)));
+        }
       } else {
         d3.select(this).style('display', 'none');
       }
