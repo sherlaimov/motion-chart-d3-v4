@@ -9,11 +9,11 @@ class MotionChart {
     this.width = this.chart.width;
     this.height = this.chart.height;
     this.container = this.chart.container;
-    this.legendWidth = (this.width - this.chart.margin.left - this.chart.margin.right) / 8;
-    this.chartWidth =
-      this.width - this.chart.margin.left - this.chart.margin.right - this.legendWidth;
+    // this.legendWidth = (this.width - this.chart.margin.left - this.chart.margin.right) / 8;
+    this.chartWidth = this.width - this.chart.margin.left - this.chart.margin.right;
     this.chartHeight = this.height - this.chart.margin.top - this.chart.margin.bottom;
     this.selection = {};
+    this.legendSVG = d3.select('#legend').append('svg');
     this.reset();
   }
   reset() {
@@ -461,7 +461,9 @@ class MotionChart {
       .on('click', function() {
         // .data()[0]
         window._el = d3.select(this);
-        // d3.select(this).classed('selection', !d3.select(this).classed('selection'));
+        const itemName = d3.select(this).data()[0].producer;
+        const foundItem = MotionChart.findItem(itemName, self.legendItems);
+        foundItem.classed('selection', !foundItem.classed('selection'));
         self.showSelectedItemData(d3.select(this));
       });
     this.update(this.startTime);
@@ -475,17 +477,16 @@ class MotionChart {
 
     if (item.classed('selection')) {
       item.raise();
+      const color = item.select('circle').style('fill');
       item
         .append('line')
         .classed('guide-line-y', true)
-        // .style('stroke', 'black')
         .attr('y1', radius)
         .attr('y2', this.chartHeight - y);
 
       item
         .append('line')
         .classed('guide-line-x', true)
-        // .style('stroke', 'black')
         .attr('x1', -radius)
         .attr('x2', -x);
 
@@ -525,7 +526,7 @@ class MotionChart {
         .attr('y', bboxX.y)
         .attr('width', bboxX.width)
         .attr('height', bboxX.height)
-        .style('fill', '#ccc')
+        .style('fill', color)
         // .style('fill-opacity', '.3')
         .style('stroke', '#666')
         .style('stroke-width', '1px');
@@ -536,7 +537,7 @@ class MotionChart {
         .attr('y', bboxY.y)
         .attr('width', bboxY.width)
         .attr('height', bboxY.height)
-        .style('fill', '#ccc')
+        .style('fill', color)
         // .style('fill-opacity', '.3')
         .style('stroke', '#666')
         .style('stroke-width', '1px');
@@ -554,17 +555,16 @@ class MotionChart {
 
   createLegend() {
     const self = this;
-    window.items = this.items;
     const legendRectSize = 15;
     const legendSpacing = 5;
-    this.legend = this.container.append('g').classed('legend', true);
-    const legendItems = this.legend
+    const legend = this.legendSVG.append('g').classed('legend', true);
+    this.legendItems = legend
       .selectAll('.item')
       .data(this.dataSource)
       .enter()
       .append('g')
       .classed('legend-item', true)
-      .attr('transform', (d, i) => `translate(${this.chartWidth + 20}, ${i * 12})`)
+      .attr('transform', (d, i) => `translate(0, ${i * 15})`)
       .each(function(item, i) {
         const label = item[self.labelData];
         const g = d3.select(this);
@@ -579,16 +579,19 @@ class MotionChart {
           .attr('y', legendRectSize - legendSpacing)
           .text(label);
       });
-    legendItems.on('click', function() {
+    this.legendItems.on('click', function() {
+      d3.select(this).classed('selection', !d3.select(this).classed('selection'));
       const itemName = d3.select(this).data()[0].producer;
-      self.selectItem(itemName);
+      const foundItem = MotionChart.findItem(itemName, self.items);
+      self.showSelectedItemData(foundItem);
     });
+    const { height, width } = legend.node().getBBox();
+    this.legendSVG.attr('height', height).attr('width', width);
   }
 
-  selectItem(name) {
-    this.items.filter(item => item.producer === name).classed('selection', function() {
-      return !d3.select(this).classed('selection');
-    });
+  static findItem(name, where) {
+    const item = where.filter(item => item.producer === name);
+    return item;
   }
 
   static hasValue(item, axis, date) {

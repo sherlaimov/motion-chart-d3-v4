@@ -9,25 +9,16 @@
 
 <body>
   <h1>Поставки нефти в 2016 году</h1>
-
-  <!-- <p id="chart"></p>
-  <div class="buttons">
-    <button id="play" data-role="button" data-inline="true" data-icon="refresh">
-      <span id="playText">Play ></span>
-    </button>
-    <button id="stop">Stop</button>
-  </div>
-  <div id="slider">
-    <div id="custom-handle" class="ui-slider-handle"></div>
-  </div> -->
-
-  <!-- <div id="timeline"></div> -->
   <p>
     <select id="selector">
       <!-- <option value="income, lifeExpectancy, population">Annual Income and Revenue</option> -->
       <option value="accumulatedDelivery, price, avgDelivery">Accumulated delivery, price, average delivery</option>
     </select>
   </p>
+  <div class="container">
+    <div id="chart"></div>
+    <div id="legend"></div>
+  </div>
   <script src="assets/bundle.js"></script>
 </body>
 

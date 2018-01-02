@@ -1,11 +1,11 @@
 import * as d3 from 'd3';
 
 const protoChart = {
-	width: 1000,
+	width: 860,
 	height: 540,
 	margin: {
-		left: 20,
-		right: 10,
+		left: 30,
+		right: 0,
 		top: 10,
 		bottom: 40,
 	},
@@ -15,7 +15,7 @@ export default function chartFactory(opts, proto = protoChart) {
 	const chart = Object.assign({}, proto, opts);
 
 	chart.svg = d3
-		.select('body')
+		.select('#chart')
 		.append('svg')
 		.attr('id', chart.id || 'chart')
 		.attr('width', chart.width + chart.margin.left + chart.margin.right)

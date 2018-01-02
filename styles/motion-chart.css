@@ -30,8 +30,19 @@ h4 {
   color: #000;
 }
 
+.container {
+  display: flex; /* or inline-flex */
+}
+
 text {
   fill: #888;
+}
+
+#legend {
+  position: relative;
+  height: 540px;
+  width: 100%;
+  overflow-y: scroll;
 }
 
 svg {
@@ -52,14 +63,16 @@ svg {
   alignment-baseline: middle;
 }
 
-.element:hover circle {
+.element:hover circle,
+.legend-item:hover rect {
   stroke-width: 1px;
   stroke: #000;
   fill-opacity: 0.8;
   cursor: pointer;
 }
 
-.element:hover text {
+.element:hover text,
+.legend-item:hover text {
   fill: #000;
   fill-opacity: 0.5;
   cursor: pointer;
@@ -110,4 +123,5 @@ svg {
 .selection > line {
   fill: none;
   stroke: rgb(105, 105, 105);
+  opacity: 0.5;
 }
